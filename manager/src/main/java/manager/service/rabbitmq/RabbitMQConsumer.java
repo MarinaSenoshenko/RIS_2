@@ -22,7 +22,7 @@ public class RabbitMQConsumer {
 
     @RabbitListener(queues = "${crackHashService.manager.queue.input}")
     public void receiveMessage(CrackHashWorkerResponse message,
-                               Channel channel,
+                               @Header(AmqpHeaders.CHANNEL) Channel channel,
                                @Header(AmqpHeaders.DELIVERY_TAG) long tag) throws IOException {
         log.info("Received message: {}", message);
         crackHashService.workerCallbackHandler(message);

@@ -5,7 +5,7 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-      mongo:
+      mongo_primary:
         condition:  service_healthy
       rabbitmq:
         condition:  service_healthy
@@ -35,14 +35,28 @@ services:
       timeout: 10s
       retries: 5
 
-  mongo:
+  mongo_primary:
     image: mongo:4.4
     command: mongod --bind_ip_all
     ports:
       - "27017:27017"
     restart: always
     healthcheck:
-      test:  ["CMD", "mongo", "--eval", "'quit(db.getSiblingDB(\"admin\").runCommand({replSetGetStatus: 1}).myState == 1 ? 0 : 1)'"]
+      test: [ "CMD", "mongo", "--eval", "'quit(db.getSiblingDB(\"admin\").runCommand({replSetGetStatus: 1}).myState == 1 ? 0 : 1)'" ]
       interval: 30s
       timeout: 10s
       retries: 5
+
+  mongo_secondary_1:
+    image: mongo:4.4
+    command: mongod --bind_ip_all && ./rs.sh"
+    restart: always
+    volumes:
+      - ./rs.sh:/rs.sh
+
+  mongo_secondary_2:
+    image: mongo:4.4
+    command: mongod --bind_ip_all && ./rs.sh"
+    restart: always
+    volumes:
+      - ./rs.sh:/rs.sh

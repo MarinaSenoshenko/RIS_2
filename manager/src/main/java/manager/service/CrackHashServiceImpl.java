@@ -38,9 +38,12 @@ public class CrackHashServiceImpl implements CrackHashService {
     private RequestsRepository requestsRepository;
     @Value("${crackHashService.manager.countWorkers}")
     private Integer countOfWorker;
+    @Value("${crackHashService.expireTimeMinutes}")
+    private Long expireTimeMinutes;
 
     private void sendTaskToWorker(CrackHashManagerRequest crackHashManagerRequest) {
         if (!rabbitMQProducer.trySendMessage(crackHashManagerRequest)) {
+            log.info("no connection, save {} to database", crackHashManagerRequest);
             requestsRepository.insert(DomainCrackHashService.getRequest(crackHashManagerRequest));
         }
     }
@@ -73,8 +76,9 @@ public class CrackHashServiceImpl implements CrackHashService {
                 requestStatus.getResult().addAll(crackHashWorkerResponse.getAnswers().getWords());
                 requestStatusRepository.save(DomainCrackHashService.changeStatus(READY, requestStatus));
 
-                log.info("Received word: {} from worker in partNumber: {}, time counting: {}",
+                log.info("Received word: {} from request id: {},from worker in partNumber: {}, time counting: {}",
                         crackHashWorkerResponse.getAnswers().getWords(),
+                        crackHashWorkerResponse.getRequestId(),
                         crackHashWorkerResponse.getPartNumber(),
                         DomainCrackHashService.getFormattedTime(System.currentTimeMillis() - requestStatus.getUpdated().getTime())
                 );
@@ -84,7 +88,8 @@ public class CrackHashServiceImpl implements CrackHashService {
 
     @Scheduled(fixedDelay = 10000)
     private void expireRequests() {
-        requestStatusRepository.findAllByUpdatedBeforeAndStatusEquals(new Date(System.currentTimeMillis() - 6000000), IN_PROGRESS)
+        requestStatusRepository.findAllByUpdatedBeforeAndStatusEquals(
+                new Date(System.currentTimeMillis() - DomainCrackHashService.MILL_TO_MIN * expireTimeMinutes), IN_PROGRESS)
                 .forEach(i -> requestStatusRepository.save(DomainCrackHashService.changeStatus(ERROR, i)));
     }
 }

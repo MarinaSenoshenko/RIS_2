@@ -17,6 +17,8 @@ import static manager.domain.model.entity.RequestStatus.Status.IN_PROGRESS;
 @Service
 public class DomainCrackHashService {
     private static final CrackHashManagerRequest.Alphabet alphabet = new CrackHashManagerRequest.Alphabet();
+    private static final int MILL_TO_SEC = 1000;
+    public static final int MILL_TO_MIN = 60000;
 
     @PostConstruct
     private void init() {
@@ -25,15 +27,11 @@ public class DomainCrackHashService {
     }
 
     public static String getFormattedTime(long time) {
-        String resultTime = "";
-        int seconds = (int) (time / 1000);
-        int milliseconds = (int) (time - seconds * 1000);
+        int minutes = (int) (time / MILL_TO_MIN);
+        int seconds = (int) ((time - minutes * MILL_TO_MIN) / MILL_TO_SEC);
+        int milliseconds = (int)(time - minutes * MILL_TO_MIN - seconds * MILL_TO_SEC);
 
-        if (seconds > 0) {
-            resultTime += seconds + " sec ";
-        }
-
-        return resultTime + milliseconds + " millis ";
+        return minutes + " min " + seconds + " sec " + milliseconds + " mill ";
     }
 
     public static RequestStatus changeStatus(Status status, RequestStatus requestStatus) {
