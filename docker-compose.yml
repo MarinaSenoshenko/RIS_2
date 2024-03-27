@@ -37,10 +37,10 @@ services:
 
   mongo_primary:
     image: mongo:4.4
-    command: mongod --bind_ip_all
     ports:
       - "27017:27017"
     restart: always
+    entrypoint: [ "/usr/bin/mongod", "--replSet", "rs0", "--bind_ip_all" ]
     healthcheck:
       test: [ "CMD", "mongo", "--eval", "'quit(db.getSiblingDB(\"admin\").runCommand({replSetGetStatus: 1}).myState == 1 ? 0 : 1)'" ]
       interval: 30s
@@ -48,15 +48,20 @@ services:
       retries: 5
 
   mongo_secondary_1:
-    image: mongo:4.4
-    command: mongod --bind_ip_all && ./rs.sh"
-    restart: always
-    volumes:
-      - ./rs.sh:/rs.sh
+      image: mongo:4.4
+      entrypoint: [ "/usr/bin/mongod", "--replSet", "rs0", "--bind_ip_all" ]
 
   mongo_secondary_2:
-    image: mongo:4.4
-    command: mongod --bind_ip_all && ./rs.sh"
-    restart: always
-    volumes:
-      - ./rs.sh:/rs.sh
+      image: mongo:4.4
+      entrypoint: [ "/usr/bin/mongod", "--replSet", "rs0", "--bind_ip_all" ]
+
+  mongosetup:
+      image: mongo:4.4
+      depends_on:
+        - mongo_primary
+        - mongo_secondary_1
+        - mongo_secondary_2
+      restart: "no"
+      volumes:
+        - ./rs.sh:/scripts/rs.sh
+      entrypoint: [ "bash", "-c", "sleep 10 && /scripts/rs.sh" ]
