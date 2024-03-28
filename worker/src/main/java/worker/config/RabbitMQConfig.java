@@ -17,6 +17,10 @@ public class RabbitMQConfig {
     private String inputQueue;
     @Value("${crackHashService.worker.queue.output}")
     private String outputQueue;
+    @Value("${crackHashService.worker.queue.input_percent}")
+    private String inputQueuePercent;
+    @Value("${crackHashService.worker.queue.output_percent}")
+    private String outputQueuePercent;
 
     @Bean
     public RabbitTemplate rabbitTemplate() {
@@ -33,6 +37,16 @@ public class RabbitMQConfig {
     @Bean
     public Queue managerToWorkersQueue() {
         return new Queue(outputQueue, true);
+    }
+
+    @Bean
+    public Queue workersToManagerPercentQueue() {
+        return new Queue(inputQueuePercent, true);
+    }
+
+    @Bean
+    public Queue managerToWorkersPercentQueue() {
+        return new Queue(outputQueuePercent, true);
     }
 
     @Bean

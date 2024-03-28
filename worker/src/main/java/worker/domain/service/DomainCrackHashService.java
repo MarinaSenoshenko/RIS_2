@@ -10,6 +10,10 @@ import java.util.List;
 @Service
 public class DomainCrackHashService {
 
+    public static double getPercentOfCompletion(int allCombinationsNumber, int currentWordNumber) {
+        return (allCombinationsNumber == 0) ? 0 : 100.0 * currentWordNumber / allCombinationsNumber;
+    }
+
     public static double getCombinationsNumber(int length, int alphabetSize) {
         return Math.pow(alphabetSize, length);
     }

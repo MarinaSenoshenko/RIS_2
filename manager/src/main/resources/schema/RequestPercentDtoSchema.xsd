@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://ccfit.nsu.ru/schema/percent-of-completion-response">
+    <xs:element name="RequestPercentDto">
+        <xs:annotation>
+            <xs:documentation>Ответ, содержащий процент выполнения задачи воркером</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="RequestId" type="xs:string">
+                    <xs:annotation>
+                        <xs:documentation>GUID запроса</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="PercentOfCompletion" type="xs:double">
+                    <xs:annotation>
+                        <xs:documentation>Процент выполнения задачи</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

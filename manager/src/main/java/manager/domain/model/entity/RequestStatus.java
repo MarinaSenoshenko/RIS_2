@@ -18,6 +18,7 @@ public class RequestStatus {
     private String requestId;
     private Status status;
     private ArrayList<String> result;
+    private Double percentOfCompletion;
     private Date updated;
 
     public enum Status {

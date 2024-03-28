@@ -25,7 +25,7 @@ public class CrackHashController {
     }
 
     @GetMapping(ManagerUrls.STATUS_URL)
-    public ResponseEntity<RequestStatusDto> getStatus(@PathVariable String requestId) {
+    public ResponseEntity<RequestStatusDto> getStatus(@PathVariable String requestId) throws InterruptedException {
         log.info("Received request to get status of request: {}", requestId);
         return new ResponseEntity<>(crackHashService.getStatus(requestId), HttpStatus.OK);
     }

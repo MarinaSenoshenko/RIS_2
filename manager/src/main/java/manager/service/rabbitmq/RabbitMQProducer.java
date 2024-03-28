@@ -20,6 +20,8 @@ public class RabbitMQProducer implements ConnectionListener {
     private RequestsRepository requestRepository;
     @Value("${crackHashService.manager.queue.output}")
     private String outputQueue;
+    @Value("${crackHashService.manager.queue.output_percent}")
+    private String outputQueuePercent;
     private final AmqpTemplate amqpTemplate;
 
     public RabbitMQProducer(AmqpTemplate amqpTemplate, ConnectionFactory connectionFactory) {
@@ -35,6 +37,15 @@ public class RabbitMQProducer implements ConnectionListener {
         } catch (AmqpException ex) {
             log.error("Failed to send request '{}', cached message", request.getRequestId());
             return false;
+        }
+    }
+
+    public void requestWorkerByRequestId(String requestId) {
+        try {
+            amqpTemplate.convertAndSend(outputQueuePercent, requestId);
+            log.info("Request sent to worker for requestId: {}", requestId);
+        } catch (AmqpException ex) {
+            log.error("Failed to send request to worker for requestId: {}", requestId);
         }
     }
 

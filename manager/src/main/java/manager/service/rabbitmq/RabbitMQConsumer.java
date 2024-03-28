@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
 import ru.nsu.ccfit.schema.crack_hash_response.CrackHashWorkerResponse;
+import ru.nsu.ccfit.schema.percent_of_completion_response.RequestPercentDto;
 
 import java.io.IOException;
 
@@ -26,6 +27,15 @@ public class RabbitMQConsumer {
                                @Header(AmqpHeaders.DELIVERY_TAG) long tag) throws IOException {
         log.info("Received message: {}", message);
         crackHashService.workerCallbackHandler(message);
+        channel.basicAck(tag, false);
+    }
+
+    @RabbitListener(queues = "${crackHashService.manager.queue.input_percent}")
+    public void receiveMessage(RequestPercentDto requestPercentDto,
+                               @Header(AmqpHeaders.CHANNEL) Channel channel,
+                               @Header(AmqpHeaders.DELIVERY_TAG) long tag) throws IOException {
+        log.info("Received message: {}", requestPercentDto);
+        crackHashService.workerCallbackHandler(requestPercentDto);
         channel.basicAck(tag, false);
     }
 }

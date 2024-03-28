@@ -44,6 +44,7 @@ public class DomainCrackHashService {
                 requestId,
                 IN_PROGRESS,
                 new ArrayList<>(),
+                0.0,
                 new Date(System.currentTimeMillis())
         );
     }
@@ -69,14 +70,10 @@ public class DomainCrackHashService {
         return crackHashManagerRequest;
     }
 
-    public static RequestStatusDto buildRequestStatusDto(RequestStatus requestStatus) {
+    public static RequestStatusDto buildRequestStatusDto(RequestStatus requestStatus, Double percentOfCompletion) {
         String status = requestStatus.getStatus().toString();
         List<String> result = requestStatus.getResult();
-        if (result.isEmpty()) {
-            result = null;
-        }
 
-        return new RequestStatusDto(status, result);
+        return new RequestStatusDto(status, percentOfCompletion + "%", (result.isEmpty()) ? null : result);
     }
 }
-

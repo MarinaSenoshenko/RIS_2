@@ -21,4 +21,10 @@ public class RabbitMQConsumer {
         log.info("Received message: {}", message);
         rabbitMQProducer.produce(crackHashService.crackCode(message));
     }
+
+    @RabbitListener(queues = "${crackHashService.worker.queue.input_percent}")
+    public void processWorkerRequest(String requestId) {
+        log.info("Received request from manager for requestId: {}", requestId);
+        rabbitMQProducer.produce(crackHashService.getPercentOfCompletion(requestId));
+    }
 }
