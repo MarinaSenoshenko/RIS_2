@@ -6,7 +6,7 @@ import org.paukov.combinatorics.ICombinatoricsVector;
 import org.springframework.stereotype.Service;
 import ru.nsu.ccfit.schema.crack_hash_request.CrackHashManagerRequest;
 import ru.nsu.ccfit.schema.crack_hash_response.CrackHashWorkerResponse;
-import ru.nsu.ccfit.schema.percent_of_completion_response.RequestPercentDto;
+import ru.nsu.ccfit.schema.percent_of_completion_response.PercentResponse;
 import worker.api.dto.CrackHashService;
 import worker.domain.service.DomainCrackHashService;
 
@@ -23,13 +23,13 @@ public class CrackHashServiceImpl implements CrackHashService {
     private String curRequestId;
 
     @Override
-    public RequestPercentDto getPercentOfCompletion(String requestId) {
-        RequestPercentDto requestPercentDto = new RequestPercentDto();
-        requestPercentDto.setPercentOfCompletion(
+    public PercentResponse getPercentOfCompletion(String requestId) {
+        PercentResponse percentResponse = new PercentResponse();
+        percentResponse.setPercentOfCompletion(
                 ((Objects.equals(curRequestId, requestId)) ?
                 DomainCrackHashService.getPercentOfCompletion(allCombinationsNumber, currentWordNumber) : 0));
-        requestPercentDto.setRequestId(requestId);
-        return requestPercentDto;
+        percentResponse.setRequestId(requestId);
+        return percentResponse;
     }
 
     @Override

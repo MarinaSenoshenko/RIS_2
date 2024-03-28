@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            targetNamespace="http://ccfit.nsu.ru/schema/percent-of-completion-response">
-    <xs:element name="RequestPercentDto">
+    <xs:element name="PercentResponse">
         <xs:annotation>
             <xs:documentation>Ответ, содержащий процент выполнения задачи воркером</xs:documentation>
         </xs:annotation>

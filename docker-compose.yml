@@ -5,7 +5,7 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-      mongo_primary:
+      mongo:
         condition:  service_healthy
       rabbitmq:
         condition:  service_healthy
@@ -35,7 +35,7 @@ services:
       timeout: 10s
       retries: 5
 
-  mongo_primary:
+  mongo:
     image: mongo:4.4
     ports:
       - "27017:27017"
@@ -47,20 +47,20 @@ services:
       timeout: 10s
       retries: 5
 
-  mongo_secondary_1:
+  mongo_1:
       image: mongo:4.4
       entrypoint: [ "/usr/bin/mongod", "--replSet", "rs0", "--bind_ip_all" ]
 
-  mongo_secondary_2:
+  mongo_2:
       image: mongo:4.4
       entrypoint: [ "/usr/bin/mongod", "--replSet", "rs0", "--bind_ip_all" ]
 
   mongosetup:
       image: mongo:4.4
       depends_on:
-        - mongo_primary
-        - mongo_secondary_1
-        - mongo_secondary_2
+        - mongo
+        - mongo_1
+        - mongo_2
       restart: "no"
       volumes:
         - ./rs.sh:/scripts/rs.sh

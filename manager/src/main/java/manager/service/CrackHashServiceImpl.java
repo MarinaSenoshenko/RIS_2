@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import ru.nsu.ccfit.schema.crack_hash_request.CrackHashManagerRequest;
 import ru.nsu.ccfit.schema.crack_hash_response.CrackHashWorkerResponse;
-import ru.nsu.ccfit.schema.percent_of_completion_response.RequestPercentDto;
+import ru.nsu.ccfit.schema.percent_of_completion_response.PercentResponse;
 
 import java.util.Date;
 import java.util.UUID;
@@ -66,7 +66,9 @@ public class CrackHashServiceImpl implements CrackHashService {
     // TODO добавить процент выполнения или время до конца выполнения
     @Override
     public RequestStatusDto getStatus(String requestId) throws InterruptedException {
-        rabbitMQProducer.requestWorkerByRequestId(requestId);
+        IntStream.range(0, countOfWorker).forEach(i ->
+                rabbitMQProducer.requestWorkerByRequestId(requestId)
+        );
         Thread.sleep(10000);
         RequestStatus requestStatus = requestStatusRepository.findByRequestId(requestId);
         return DomainCrackHashService.buildRequestStatusDto(requestStatusRepository.findByRequestId(requestId),
@@ -93,10 +95,18 @@ public class CrackHashServiceImpl implements CrackHashService {
     }
 
     @Override
-    public void workerCallbackHandler(RequestPercentDto requestPercentDto) {
-        log.info("requestId: {}, percentOfCompletion: {}", requestPercentDto.getRequestId(), requestPercentDto.getPercentOfCompletion());
-        RequestStatus requestStatus = requestStatusRepository.findByRequestId(requestPercentDto.getRequestId());
-        requestStatus.setPercentOfCompletion(requestPercentDto.getPercentOfCompletion());
+    public void workerCallbackHandler(PercentResponse percentResponse) {
+        log.info("requestId: {}, percentOfCompletion: {}", percentResponse.getRequestId(), percentResponse.getPercentOfCompletion());
+        RequestStatus requestStatus = requestStatusRepository.findByRequestId(percentResponse.getRequestId());
+
+        if (requestStatus.getStatus() == READY) {
+            requestStatus.setPercentOfCompletion(100.0);
+        }
+        else {
+            if (percentResponse.getPercentOfCompletion() > requestStatus.getPercentOfCompletion()) {
+                requestStatus.setPercentOfCompletion(percentResponse.getPercentOfCompletion());
+            }
+        }
         requestStatusRepository.save(requestStatus);
     }
 

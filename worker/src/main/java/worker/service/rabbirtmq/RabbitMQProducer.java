@@ -6,7 +6,7 @@ import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.nsu.ccfit.schema.crack_hash_response.CrackHashWorkerResponse;
-import ru.nsu.ccfit.schema.percent_of_completion_response.RequestPercentDto;
+import ru.nsu.ccfit.schema.percent_of_completion_response.PercentResponse;
 
 @Service
 @Slf4j
@@ -30,9 +30,9 @@ public class RabbitMQProducer {
         }
     }
 
-    public void produce(RequestPercentDto requestPercentDto) {
+    public void produce(PercentResponse percentResponse) {
         try {
-            amqpTemplate.convertAndSend(outputQueuePercent, requestPercentDto);
+            amqpTemplate.convertAndSend(outputQueuePercent, percentResponse);
         } catch (AmqpException ignored) {}
     }
 }
