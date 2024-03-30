@@ -13,23 +13,17 @@ import worker.domain.service.DomainCrackHashService;
 import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @Slf4j
 public class CrackHashServiceImpl implements CrackHashService {
     private int allCombinationsNumber = 0;
-    private int currentWordNumber = 1;
+    private int currentWordNumber = 0;
     private String curRequestId;
 
     @Override
     public PercentResponse getPercentOfCompletion(String requestId) {
-        PercentResponse percentResponse = new PercentResponse();
-        percentResponse.setPercentOfCompletion(
-                ((Objects.equals(curRequestId, requestId)) ?
-                DomainCrackHashService.getPercentOfCompletion(allCombinationsNumber, currentWordNumber) : 0));
-        percentResponse.setRequestId(requestId);
-        return percentResponse;
+        return DomainCrackHashService.buildResponse(requestId, curRequestId, allCombinationsNumber, currentWordNumber);
     }
 
     @Override
@@ -44,9 +38,12 @@ public class CrackHashServiceImpl implements CrackHashService {
         int partCount = request.getPartCount();
         int alphabetSize = request.getAlphabet().getSymbols().size();
 
+        currentWordNumber = 0;
+        allCombinationsNumber = 0;
         for (int i = 1; i <= maxLength; i++) {
-            allCombinationsNumber += (long) DomainCrackHashService.getCombinationsNumber(i, alphabetSize) / partCount;
+            allCombinationsNumber += (long) DomainCrackHashService.getCombinationsNumber(i, alphabetSize);
         }
+        log.info("allCombinationsNumber: {}", allCombinationsNumber);
 
         for (int i = 1; i <= maxLength; i++) {
             long combinationsNumber = (long) DomainCrackHashService.getCombinationsNumber(i, alphabetSize);
@@ -68,10 +65,10 @@ public class CrackHashServiceImpl implements CrackHashService {
                     break;
                 }
             }
-
-            log.info("percent = {} currentWordNumber = {}, allCombinationsNumber = {}",
-                    getPercentOfCompletion(curRequestId), currentWordNumber, allCombinationsNumber);
         }
+        log.info("currentWordNumber: {}", currentWordNumber);
+        currentWordNumber = 0;
+        allCombinationsNumber = 0;
         log.info("end processing task : {}", request.getRequestId());
         return DomainCrackHashService.buildResponse(request.getRequestId(), partNumber, answers);
     }

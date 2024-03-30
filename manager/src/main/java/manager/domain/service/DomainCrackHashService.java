@@ -13,12 +13,14 @@ import java.util.Date;
 import java.util.List;
 
 import static manager.domain.model.entity.RequestStatus.Status.IN_PROGRESS;
+import static manager.domain.model.entity.RequestStatus.Status.READY;
 
 @Service
 public class DomainCrackHashService {
     private static final CrackHashManagerRequest.Alphabet alphabet = new CrackHashManagerRequest.Alphabet();
     private static final int MILL_TO_SEC = 1000;
     public static final int MILL_TO_MIN = 60000;
+    public static final double BOTH_WORKERS_FINISHED_PERCENT = 100.0;
 
     @PostConstruct
     private void init() {
@@ -32,6 +34,13 @@ public class DomainCrackHashService {
         int milliseconds = (int)(time - minutes * MILL_TO_MIN - seconds * MILL_TO_SEC);
 
         return minutes + " min " + seconds + " sec " + milliseconds + " mill ";
+    }
+
+    public static double getPercentOfCompletion(Status status, double percentOfCompletion) {
+        if (status == READY) {
+            return BOTH_WORKERS_FINISHED_PERCENT;
+        }
+        return percentOfCompletion;
     }
 
     public static RequestStatus changeStatus(Status status, RequestStatus requestStatus) {
@@ -70,10 +79,10 @@ public class DomainCrackHashService {
         return crackHashManagerRequest;
     }
 
-    public static RequestStatusDto buildRequestStatusDto(RequestStatus requestStatus, Double percentOfCompletion) {
+    public static RequestStatusDto buildRequestStatusDto(RequestStatus requestStatus, double percentOfCompletion) {
         String status = requestStatus.getStatus().toString();
         List<String> result = requestStatus.getResult();
 
-        return new RequestStatusDto(status, percentOfCompletion + "%", (result.isEmpty()) ? null : result);
+        return new RequestStatusDto(status, (int) percentOfCompletion + "%", (result.isEmpty()) ? null : result);
     }
 }

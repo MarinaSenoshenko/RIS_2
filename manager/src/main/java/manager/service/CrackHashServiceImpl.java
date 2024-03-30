@@ -8,7 +8,6 @@ import manager.domain.model.repository.RequestStatusRepository;
 import manager.domain.model.repository.RequestsRepository;
 import manager.domain.service.DomainCrackHashService;
 import manager.service.rabbitmq.RabbitMQProducer;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,7 +19,10 @@ import ru.nsu.ccfit.schema.crack_hash_response.CrackHashWorkerResponse;
 import ru.nsu.ccfit.schema.percent_of_completion_response.PercentResponse;
 
 import java.util.Date;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.IntStream;
 
 import static manager.domain.model.entity.RequestStatus.Status.*;
@@ -31,16 +33,22 @@ import static manager.domain.model.entity.RequestStatus.Status.*;
 @Transactional(isolation = Isolation.SERIALIZABLE)
 @EnableScheduling
 public class CrackHashServiceImpl implements CrackHashService {
-    @Autowired
-    private RabbitMQProducer rabbitMQProducer;
-    @Autowired
-    private RequestStatusRepository requestStatusRepository;
-    @Autowired
-    private RequestsRepository requestsRepository;
+    private final RabbitMQProducer rabbitMQProducer;
+    private final RequestStatusRepository requestStatusRepository;
+    private final RequestsRepository requestsRepository;
     @Value("${crackHashService.manager.countWorkers}")
     private Integer countOfWorker;
     @Value("${crackHashService.expireTimeMinutes}")
     private Long expireTimeMinutes;
+    private final Map<String, CountDownLatch> requestsLatch = new ConcurrentHashMap<>();
+    private final Map<String, Double> requestsWorkersPercents = new ConcurrentHashMap<>();
+
+    public CrackHashServiceImpl(RabbitMQProducer rabbitMQProducer, RequestStatusRepository requestStatusRepository,
+                                RequestsRepository requestsRepository) {
+        this.rabbitMQProducer = rabbitMQProducer;
+        this.requestStatusRepository = requestStatusRepository;
+        this.requestsRepository = requestsRepository;
+    }
 
     private void sendTaskToWorker(CrackHashManagerRequest crackHashManagerRequest) {
         if (!rabbitMQProducer.trySendMessage(crackHashManagerRequest)) {
@@ -63,15 +71,20 @@ public class CrackHashServiceImpl implements CrackHashService {
         return requestId;
     }
 
-    // TODO добавить процент выполнения или время до конца выполнения
     @Override
     public RequestStatusDto getStatus(String requestId) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(countOfWorker);
+        requestsLatch.put(requestId, latch);
+        requestsWorkersPercents.put(requestId, 0.0);
+
         IntStream.range(0, countOfWorker).forEach(i ->
                 rabbitMQProducer.requestWorkerByRequestId(requestId)
         );
-        Thread.sleep(10000);
+
+        latch.await();
+
         RequestStatus requestStatus = requestStatusRepository.findByRequestId(requestId);
-        return DomainCrackHashService.buildRequestStatusDto(requestStatusRepository.findByRequestId(requestId),
+        return DomainCrackHashService.buildRequestStatusDto(requestStatus,
                 requestStatus.getPercentOfCompletion());
     }
 
@@ -96,18 +109,18 @@ public class CrackHashServiceImpl implements CrackHashService {
 
     @Override
     public void workerCallbackHandler(PercentResponse percentResponse) {
-        log.info("requestId: {}, percentOfCompletion: {}", percentResponse.getRequestId(), percentResponse.getPercentOfCompletion());
-        RequestStatus requestStatus = requestStatusRepository.findByRequestId(percentResponse.getRequestId());
+        String requestId = percentResponse.getRequestId();
+        double percentOfCompletion = percentResponse.getPercentOfCompletion();
 
-        if (requestStatus.getStatus() == READY) {
-            requestStatus.setPercentOfCompletion(100.0);
-        }
-        else {
-            if (percentResponse.getPercentOfCompletion() > requestStatus.getPercentOfCompletion()) {
-                requestStatus.setPercentOfCompletion(percentResponse.getPercentOfCompletion());
-            }
-        }
+        requestsWorkersPercents.put(requestId, requestsWorkersPercents.get(requestId) + percentOfCompletion);
+
+        RequestStatus requestStatus = requestStatusRepository.findByRequestId(requestId);
+        requestStatus.setPercentOfCompletion(DomainCrackHashService.getPercentOfCompletion(requestStatus.getStatus(),
+                2 * Math.min(requestsWorkersPercents.get(requestId), percentOfCompletion)));
+
         requestStatusRepository.save(requestStatus);
+
+        requestsLatch.get(requestId).countDown();
     }
 
     @Scheduled(fixedDelay = 10000)

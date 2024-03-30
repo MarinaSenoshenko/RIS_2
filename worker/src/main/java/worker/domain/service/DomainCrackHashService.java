@@ -6,6 +6,10 @@ import ru.nsu.ccfit.schema.crack_hash_response.CrackHashWorkerResponse;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.Objects;
+
+import ru.nsu.ccfit.schema.percent_of_completion_response.PercentResponse;
+
 
 @Service
 public class DomainCrackHashService {
@@ -23,6 +27,18 @@ public class DomainCrackHashService {
         newAnswers.getWords().addAll(answers);
 
         return newAnswers;
+    }
+
+    public static PercentResponse buildResponse(String requestId, String curRequestId,
+                                                int allCombinationsNumber, int currentWordNumber) {
+        PercentResponse percentResponse = new PercentResponse();
+        percentResponse.setRequestId(requestId);
+        percentResponse.setPercentOfCompletion(
+                ((Objects.equals(curRequestId, requestId)) ?
+                        getPercentOfCompletion(allCombinationsNumber, currentWordNumber) : 0)
+        );
+
+        return percentResponse;
     }
 
     public static CrackHashWorkerResponse buildResponse(String requestId, int partNumber, List<String> answers) {
