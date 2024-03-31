@@ -1,5 +1,6 @@
 package worker.domain.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.nsu.ccfit.schema.crack_hash_response.CrackHashWorkerResponse;
 
@@ -12,6 +13,7 @@ import ru.nsu.ccfit.schema.percent_of_completion_response.PercentResponse;
 
 
 @Service
+@Slf4j
 public class DomainCrackHashService {
 
     public static double getPercentOfCompletion(int allCombinationsNumber, int currentWordNumber) {

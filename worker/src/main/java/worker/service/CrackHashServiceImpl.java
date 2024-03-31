@@ -29,7 +29,7 @@ public class CrackHashServiceImpl implements CrackHashService {
     @Override
     public CrackHashWorkerResponse crackCode(CrackHashManagerRequest request) {
         log.info("progress task: {}", request);
-        curRequestId = request.getRequestId();
+
         ICombinatoricsVector<String> vector = CombinatoricsFactory.createVector(request.getAlphabet().getSymbols());
         List<String> answers = new ArrayList<>();
 
@@ -38,13 +38,14 @@ public class CrackHashServiceImpl implements CrackHashService {
         int partCount = request.getPartCount();
         int alphabetSize = request.getAlphabet().getSymbols().size();
 
-        currentWordNumber = 0;
         allCombinationsNumber = 0;
+        currentWordNumber = 0;
         for (int i = 1; i <= maxLength; i++) {
             allCombinationsNumber += (long) DomainCrackHashService.getCombinationsNumber(i, alphabetSize);
         }
         log.info("allCombinationsNumber: {}", allCombinationsNumber);
 
+        curRequestId = request.getRequestId();
         for (int i = 1; i <= maxLength; i++) {
             long combinationsNumber = (long) DomainCrackHashService.getCombinationsNumber(i, alphabetSize);
             long partSize = combinationsNumber / partCount;
@@ -67,8 +68,6 @@ public class CrackHashServiceImpl implements CrackHashService {
             }
         }
         log.info("currentWordNumber: {}", currentWordNumber);
-        currentWordNumber = 0;
-        allCombinationsNumber = 0;
         log.info("end processing task : {}", request.getRequestId());
         return DomainCrackHashService.buildResponse(request.getRequestId(), partNumber, answers);
     }

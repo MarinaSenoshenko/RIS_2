@@ -116,7 +116,7 @@ public class CrackHashServiceImpl implements CrackHashService {
 
         RequestStatus requestStatus = requestStatusRepository.findByRequestId(requestId);
         requestStatus.setPercentOfCompletion(DomainCrackHashService.getPercentOfCompletion(requestStatus.getStatus(),
-                2 * Math.min(requestsWorkersPercents.get(requestId), percentOfCompletion)));
+                requestsWorkersPercents.get(requestId)));
 
         requestStatusRepository.save(requestStatus);
 
