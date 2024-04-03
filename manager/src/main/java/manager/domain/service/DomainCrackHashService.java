@@ -43,6 +43,14 @@ public class DomainCrackHashService {
         return percentOfCompletion;
     }
 
+    public static double getPercentOfCompletionSum(int currentPartNumber, int lastPartNumber,
+                                                   double currentPercentOfCompletion, double lastPercentOfCompletion) {
+        return (currentPartNumber == lastPartNumber) ?
+                currentPercentOfCompletion + (((currentPartNumber == 1) && lastPercentOfCompletion > 0) ? 50.0 : 0.0) :
+                currentPercentOfCompletion + lastPercentOfCompletion;
+    }
+
+
     public static RequestStatus changeStatus(Status status, RequestStatus requestStatus) {
         requestStatus.setStatus(status);
         return requestStatus;

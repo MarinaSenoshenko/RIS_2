@@ -32,9 +32,10 @@ public class DomainCrackHashService {
     }
 
     public static PercentResponse buildResponse(String requestId, String curRequestId,
-                                                int allCombinationsNumber, int currentWordNumber) {
+                                                int allCombinationsNumber, int currentWordNumber, int partNumber) {
         PercentResponse percentResponse = new PercentResponse();
         percentResponse.setRequestId(requestId);
+        percentResponse.setPartNumber(partNumber);
         percentResponse.setPercentOfCompletion(
                 ((Objects.equals(curRequestId, requestId)) ?
                         getPercentOfCompletion(allCombinationsNumber, currentWordNumber) : 0)

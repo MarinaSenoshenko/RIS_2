@@ -42,6 +42,8 @@ public class CrackHashServiceImpl implements CrackHashService {
     private Long expireTimeMinutes;
     private final Map<String, CountDownLatch> requestsLatch = new ConcurrentHashMap<>();
     private final Map<String, Double> requestsWorkersPercents = new ConcurrentHashMap<>();
+    private final Map<String, Integer> requestsPartNumbers = new ConcurrentHashMap<>();
+    private final Map<String, Integer> requestsCounters = new ConcurrentHashMap<>();
 
     public CrackHashServiceImpl(RabbitMQProducer rabbitMQProducer, RequestStatusRepository requestStatusRepository,
                                 RequestsRepository requestsRepository) {
@@ -74,8 +76,11 @@ public class CrackHashServiceImpl implements CrackHashService {
     @Override
     public RequestStatusDto getStatus(String requestId) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(countOfWorker);
+
         requestsLatch.put(requestId, latch);
         requestsWorkersPercents.put(requestId, 0.0);
+        requestsPartNumbers.put(requestId, -1);
+        requestsCounters.put(requestId, 2);
 
         IntStream.range(0, countOfWorker).forEach(i ->
                 rabbitMQProducer.requestWorkerByRequestId(requestId)
@@ -111,8 +116,18 @@ public class CrackHashServiceImpl implements CrackHashService {
     public void workerCallbackHandler(PercentResponse percentResponse) {
         String requestId = percentResponse.getRequestId();
         double percentOfCompletion = percentResponse.getPercentOfCompletion();
+        int partNumber = percentResponse.getPartNumber();
 
-        requestsWorkersPercents.put(requestId, requestsWorkersPercents.get(requestId) + percentOfCompletion);
+        requestsCounters.put(requestId, requestsCounters.get(requestId) - 1);
+
+        double percentOfCompletionSum = DomainCrackHashService.getPercentOfCompletionSum(partNumber,
+                requestsPartNumbers.get(requestId), percentOfCompletion, requestsWorkersPercents.get(requestId));
+
+        log.info("new partNumber: {} old partNumber: {}", partNumber, requestsPartNumbers.get(requestId));
+        log.info("percentOfCompletionSum: {}", percentOfCompletionSum);
+
+        requestsPartNumbers.put(requestId, partNumber);
+        requestsWorkersPercents.put(requestId, percentOfCompletionSum);
 
         RequestStatus requestStatus = requestStatusRepository.findByRequestId(requestId);
         requestStatus.setPercentOfCompletion(DomainCrackHashService.getPercentOfCompletion(requestStatus.getStatus(),

@@ -19,11 +19,13 @@ import java.util.List;
 public class CrackHashServiceImpl implements CrackHashService {
     private int allCombinationsNumber = 0;
     private int currentWordNumber = 0;
+    private int partNumber;
     private String curRequestId;
 
     @Override
-    public PercentResponse getPercentOfCompletion(String requestId) {
-        return DomainCrackHashService.buildResponse(requestId, curRequestId, allCombinationsNumber, currentWordNumber);
+    public PercentResponse getPercentOfCompletion(String requestId) throws InterruptedException {
+        Thread.sleep(1);
+        return DomainCrackHashService.buildResponse(requestId, curRequestId, allCombinationsNumber, currentWordNumber, partNumber);
     }
 
     @Override
@@ -34,7 +36,6 @@ public class CrackHashServiceImpl implements CrackHashService {
         List<String> answers = new ArrayList<>();
 
         int maxLength = request.getMaxLength();
-        int partNumber = request.getPartNumber();
         int partCount = request.getPartCount();
         int alphabetSize = request.getAlphabet().getSymbols().size();
 
@@ -46,6 +47,7 @@ public class CrackHashServiceImpl implements CrackHashService {
         log.info("allCombinationsNumber: {}", allCombinationsNumber);
 
         curRequestId = request.getRequestId();
+        partNumber = request.getPartNumber();
         for (int i = 1; i <= maxLength; i++) {
             long combinationsNumber = (long) DomainCrackHashService.getCombinationsNumber(i, alphabetSize);
             long partSize = combinationsNumber / partCount;

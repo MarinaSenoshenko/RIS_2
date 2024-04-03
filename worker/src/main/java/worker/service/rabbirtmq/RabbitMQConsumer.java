@@ -23,7 +23,7 @@ public class RabbitMQConsumer {
     }
 
     @RabbitListener(queues = "${crackHashService.worker.queue.input_percent}")
-    public void processWorkerRequest(String requestId) {
+    public void processWorkerRequest(String requestId) throws InterruptedException {
         log.info("Received request from manager for requestId: {}", requestId);
         rabbitMQProducer.produce(crackHashService.getPercentOfCompletion(requestId));
     }
