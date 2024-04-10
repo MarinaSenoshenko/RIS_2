@@ -45,7 +45,7 @@ docker-compose up --build
 ![crack-hash-2.png](crack-hash-2.png)
 
 ### Стек технологий
-* Java 17 
+* Java 11
 * Spring boot 
 * RabbitMQ
 * MongoDB
